@@ -91,6 +91,14 @@ or from the shell:
 
 am start -a android.intent.action.MAIN -n de.blinkt.openvpn/.LaunchVPN -e de.blinkt.openvpn.shortcutProfileName Home
 
+The ConnectVPN intent also accepts the optional `de.blinkt.openvpn.api.serverAddress` extra.
+Use `tcp://host:port` or `udp://host:port` to temporarily override all enabled servers
+without changing the saved profile. IPv6 addresses must be enclosed in brackets, for example:
+
+am start-activity -a android.intent.action.MAIN -e de.blinkt.openvpn.api.profileName mediav6-full -e de.blinkt.openvpn.api.serverAddress tcp://203.0.113.5:8443 de.blinkt.openvpn/.api.ConnectVPN
+
+am start-activity -a android.intent.action.MAIN -e de.blinkt.openvpn.api.profileName mediav6-full -e de.blinkt.openvpn.api.serverAddress tcp://[240e:3b5:1011:d494::1]:443 de.blinkt.openvpn/.api.ConnectVPN
+
 Q: How can I control the app from an external app?
 
 A: There is an AIDL interface. See src/de/blinkt/openvpn/api/IOpenVPNAPIService.aidl. See the normal Android documentation how to use AIDL. 

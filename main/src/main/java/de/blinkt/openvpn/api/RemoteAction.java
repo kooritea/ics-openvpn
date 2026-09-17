@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import de.blinkt.openvpn.LaunchVPN;
 import de.blinkt.openvpn.VpnProfile;
+import de.blinkt.openvpn.core.Connection;
 import de.blinkt.openvpn.core.IOpenVPNServiceInternal;
 import de.blinkt.openvpn.core.OpenVPNService;
 import de.blinkt.openvpn.core.Preferences;
@@ -27,6 +28,7 @@ import de.blinkt.openvpn.core.VpnStatus;
 public class RemoteAction extends Activity {
 
     public static final String EXTRA_NAME = "de.blinkt.openvpn.api.profileName";
+    public static final String EXTRA_SERVER_ADDRESS = "de.blinkt.openvpn.api.serverAddress";
     private boolean mDoDisconnect;
     private IOpenVPNServiceInternal mService;
     private final ServiceConnection mConnection = new ServiceConnection() {
@@ -70,11 +72,43 @@ public class RemoteAction extends Activity {
         if (profile == null) {
             Toast.makeText(this, String.format("Vpn profile %s from API call not found", vpnName), Toast.LENGTH_LONG).show();
         } else {
+            String serverAddress = intent.getStringExtra(EXTRA_SERVER_ADDRESS);
+            if (serverAddress != null) {
+                try {
+                    profile = createTemporaryProfile(profile, ServerAddress.parse(serverAddress));
+                    ProfileManager.setTemporaryProfile(this, profile);
+                } catch (IllegalArgumentException e) {
+                    VpnStatus.logException("Invalid serverAddress from API call", e);
+                    Toast.makeText(this, "Invalid serverAddress: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    return;
+                }
+            }
+
             Intent startVPN = new Intent(this, LaunchVPN.class);
             startVPN.putExtra(LaunchVPN.EXTRA_KEY, profile.getUUID().toString());
             startVPN.putExtra(OpenVPNService.EXTRA_START_REASON, ".api.ConnectVPN call");
             startVPN.setAction(Intent.ACTION_MAIN);
             startActivity(startVPN);
+        }
+    }
+
+    static VpnProfile createTemporaryProfile(VpnProfile profile, ServerAddress serverAddress) {
+        VpnProfile temporaryProfile = profile.copy(profile.mName);
+        overrideServerAddress(temporaryProfile, serverAddress);
+        return temporaryProfile;
+    }
+
+    static void overrideServerAddress(VpnProfile profile, ServerAddress serverAddress) {
+        profile.mServerName = serverAddress.host;
+        profile.mServerPort = serverAddress.port;
+        profile.mUseUdp = serverAddress.useUdp;
+
+        for (Connection connection : profile.mConnections) {
+            if (connection.mEnabled) {
+                connection.mServerName = serverAddress.host;
+                connection.mServerPort = serverAddress.port;
+                connection.mUseUdp = serverAddress.useUdp;
+            }
         }
     }
 

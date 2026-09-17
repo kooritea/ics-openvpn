@@ -116,10 +116,15 @@ activities to start/stop, pause/resume (like a user would with the notification)
  - `de.blinkt.openvpn.api.ResumeVPN`
 
 They use `de.blinkt.openvpn.api.profileName` as extra for the name of the VPN profile.
+For `ConnectVPN`, the optional `de.blinkt.openvpn.api.serverAddress` extra can temporarily override
+all enabled servers in the profile. Use the format `tcp://host:port` or `udp://host:port`.
+IPv6 addresses must be enclosed in brackets, for example `tcp://[2001:db8::1]:443`.
+The saved profile is not changed.
 
 You can use `adb` to test these intents:
 
     adb -d shell am start -a android.intent.action.MAIN -n de.blinkt.openvpn/.api.ConnectVPN --es de.blinkt.openvpn.api.profileName myvpnprofile
+    adb -d shell am start -a android.intent.action.MAIN -n de.blinkt.openvpn/.api.ConnectVPN --es de.blinkt.openvpn.api.profileName myvpnprofile --es de.blinkt.openvpn.api.serverAddress tcp://203.0.113.5:8443
 
 
 Note to administrators
